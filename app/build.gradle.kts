@@ -1,5 +1,5 @@
 plugins {
-    id("com.google.devtools.ksp") version "2.1.10-1.0.31"
+    alias(libs.plugins.ksp)
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.dagger.hilt)
@@ -58,6 +58,12 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.hilt.android.compiler)
     ksp(libs.hilt.android.compiler)
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.jsoup)
+
+    implementation(libs.coroutines)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
