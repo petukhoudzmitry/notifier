@@ -1,6 +1,7 @@
 package com.tlscontact.services
 
 import android.util.Log
+import com.tlscontact.repositories.ConfigurationRepository
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
@@ -11,7 +12,8 @@ import javax.inject.Inject
 
 class DataProcessingService @Inject constructor(private val httpClientService: HttpClientService,
                                                 private val urlService: URLService,
-                                                private val cssSelectorService: CSSSelectorService) {
+                                                private val cssSelectorService: CSSSelectorService,
+                                                private val configurationRepository: ConfigurationRepository) {
     suspend fun fetchData(): String {
         try {
             val response = httpClientService.httpClient.get(urlService.url).bodyAsText()
@@ -19,7 +21,7 @@ class DataProcessingService @Inject constructor(private val httpClientService: H
         } catch (e: Exception) {
             Log.e("FETCH_DATA", e.stackTraceToString())
         }
-        return ""
+        return configurationRepository.getConfiguration()
     }
 
     suspend fun getLatestNews(): String {
