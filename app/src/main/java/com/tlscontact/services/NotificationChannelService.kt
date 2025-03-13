@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 
 class NotificationChannelService @Inject constructor(@ApplicationContext private val context: Context,
-    private val urlService: URLService) {
+                                                     private val urlService: URLService) {
     private val channelId = "notifier_channel_id"
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -50,7 +50,7 @@ class NotificationChannelService @Inject constructor(@ApplicationContext private
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("New Post")
                 .setContentText(contentText)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
 
@@ -59,17 +59,19 @@ class NotificationChannelService @Inject constructor(@ApplicationContext private
             }
         } else {
             Log.i("PERMISSION", "Permission not granted")
-            requestNotificationPermission(context as MainActivity)
         }
     }
 
-    private fun requestNotificationPermission(activity: MainActivity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val requestPermissionLauncher = activity.registerForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) {}
+    companion object {
 
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        fun requestNotificationPermission(activity: MainActivity) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val requestPermissionLauncher = activity.registerForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) {}
+
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
 }
