@@ -67,7 +67,7 @@ class NotificationService() : Service() {
                     notificationChannelService.sendNotification(latestNews)
                 }
 
-                delay(10_000)
+                delay(60_000)
             }
         }
     }
