@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -17,32 +16,44 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import com.tlscontact.services.DataProcessingService
+import com.tlscontact.services.GitHubUpdateService
+import com.tlscontact.services.NetworkLiveDataService
 import com.tlscontact.services.NotificationChannelService
 import com.tlscontact.services.NotificationService
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
+    @Inject lateinit var gitHubUpdateService: GitHubUpdateService
     @Inject lateinit var dataProcessingService: DataProcessingService
+    @Inject lateinit var networkLiveDataService: NetworkLiveDataService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val htmlContent = mutableStateOf("")
+        val internetConnection = mutableStateOf( false )
 
-        lifecycleScope.launch {
-            htmlContent.value = dataProcessingService.fetchData()
-            Log.i("HTML_CONTENT", htmlContent.value)
+        networkLiveDataService.observe(this) { isConnected ->
+            internetConnection.value = isConnected
+            if (isConnected) {
+                runBlocking {
+                    htmlContent.value = dataProcessingService.fetchData()
+                }
+            } else {
+                Toast.makeText(this, "No internet connection", Toast.LENGTH_LONG).show()
+            }
         }
 
         setContent {
             HtmlWebView(htmlContent)
+            if (internetConnection.value) {
+                gitHubUpdateService.CheckGitHubUpdate(this)
+            }
         }
 
 

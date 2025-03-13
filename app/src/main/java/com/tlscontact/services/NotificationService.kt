@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class NotificationService() : Service() {
+class NotificationService : Service() {
     @Inject lateinit var dataProcessingService: DataProcessingService
     @Inject lateinit var configurationRepository: ConfigurationRepository
     @Inject lateinit var notificationChannelService: NotificationChannelService
