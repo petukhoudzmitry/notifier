@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.net.URL
 import javax.inject.Inject
+import android.util.Log
 
 
 class GitHubUpdateService @Inject constructor() {
@@ -22,12 +23,17 @@ class GitHubUpdateService @Inject constructor() {
 
     @Composable
     fun CheckGitHubUpdate(context: Context) {
+        val currentVersion = BuildConfig.VERSION_NAME
         val latestVersion = runBlocking(Dispatchers.IO) {
-            val response = URL(apiUrl).readText()
-            JSONObject(response).getString("tag_name")
+            try {
+                val response = URL(apiUrl).readText()
+                JSONObject(response).getString("tag_name")
+            } catch (e: Exception) {
+                Log.e("CheckGitHubUpdate", e.message.toString())
+                currentVersion
+            }
         }
 
-        val currentVersion = BuildConfig.VERSION_NAME
 
         if (latestVersion > currentVersion) {
             ShowUpdateDialog(context, latestVersion)
