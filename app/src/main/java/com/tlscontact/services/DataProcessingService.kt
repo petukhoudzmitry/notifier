@@ -19,7 +19,7 @@ class DataProcessingService @Inject constructor(private val httpClientService: H
             val response = httpClientService.httpClient.get(urlService.url).bodyAsText()
             return response
         } catch (e: Exception) {
-            Log.e("FETCH_DATA", e.stackTraceToString())
+            Log.e("FETCH_DATA_EXCEPTION", e.stackTraceToString())
         }
         return configurationRepository.getConfiguration()
     }
@@ -27,7 +27,7 @@ class DataProcessingService @Inject constructor(private val httpClientService: H
     suspend fun getLatestNews(): String {
         return withContext(Dispatchers.IO) {
             val document = Jsoup.parse(fetchData())
-            document.select(cssSelectorService.cssSelector).firstOrNull()?.text() ?: ""
+            document.select(cssSelectorService.cssSelector).firstOrNull()?.text() ?: configurationRepository.getConfiguration()
         }
     }
 }
