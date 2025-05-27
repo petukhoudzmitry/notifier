@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Notifier</string>
+    <string name="error_message_no_internet">No internet connection</string>
+    <string name="error_message_notification_permission_denied">Notification permission denied</string>
 </resources>

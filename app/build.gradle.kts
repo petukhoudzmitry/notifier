@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+
 plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.android.application)
@@ -16,7 +18,7 @@ android {
         minSdk = 24
         targetSdk = 35
         versionCode = 1
-        versionName = "v1.0.2"
+        versionName = "v1.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,13 +26,23 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(project.property("KEYSTORE_FILE") as String)
+            storePassword = project.property("KEYSTORE_PASSWORD") as String
+            keyAlias = project.property("KEY_ALIAS") as String
+            keyPassword = project.property("KEY_PASSWORD") as String
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -52,6 +64,17 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/gradle/incremental.annotation.processors"
         }
+    }
+}
+
+android.applicationVariants.configureEach {
+    outputs.all {
+        val appName = rootProject.name
+        val version = android.defaultConfig.versionName
+        val buildType = buildType.name
+
+        val newApkName = "$appName-$version-$buildType.apk"
+        (this as BaseVariantOutputImpl).outputFileName = newApkName
     }
 }
 

@@ -16,12 +16,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.tlscontact.MainActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
 
 class NotificationChannelService @Inject constructor(@ApplicationContext private val context: Context,
                                                      private val urlService: URLService) {
     private val channelId = "notifier_channel_id"
+    private val atomicInt: AtomicInteger = AtomicInteger()
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelName = "Notifier Channel"
@@ -38,7 +40,7 @@ class NotificationChannelService @Inject constructor(@ApplicationContext private
 
     fun sendNotification(contentText: String) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            val notificationId = 1
+            val notificationId = atomicInt.get()
 
             val intent = Intent(Intent.ACTION_VIEW, urlService.url.toString().toUri())
 
@@ -50,6 +52,7 @@ class NotificationChannelService @Inject constructor(@ApplicationContext private
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("New Post")
                 .setContentText(contentText)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)

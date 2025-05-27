@@ -8,3 +8,7 @@ option java_multiple_files = true;
 message Configuration {
     string title = 1;
 }
+
+message Page {
+    string content = 1;
+}
