@@ -6,4 +6,5 @@ plugins {
     alias(libs.plugins.dagger.hilt) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.protobuf) apply false
+    alias(libs.plugins.sonarqube) apply false
 }
