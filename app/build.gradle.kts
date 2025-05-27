@@ -7,6 +7,15 @@ plugins {
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.sonarqube)
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "tlscontact_notifier")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.login", project.property("SONAR_TOKEN") as String)
+    }
 }
 
 android {
