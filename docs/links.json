@@ -1,7 +1,7 @@
 {
   "name": "news-extraction-api",
   "version": "1",
-  "apis": [
+  "links": [
     {
       "id": "cloudflare-bypass",
       "url": "http://cloudflare.bnhze9dzfvf5b8gs.switzerlandnorth.azurecontainer.io:8000/html"
