@@ -1,4 +1,13 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.Properties
+
+val secrets = Properties()
+Files.newBufferedReader(Paths.get("secrets.properties")).use {
+    secrets.load(it)
+}
 
 plugins {
     alias(libs.plugins.ksp)
@@ -14,18 +23,24 @@ sonarqube {
     properties {
         property("sonar.projectKey", "tlscontact_notifier")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.login", project.property("SONAR_TOKEN") as String)
+        property("sonar.login", secrets["SONAR_TOKEN"] as String)
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 
 android {
     namespace = "com.tlscontact"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tlscontact"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "v1.0.3"
 
@@ -37,10 +52,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(project.property("KEYSTORE_FILE") as String)
-            storePassword = project.property("KEYSTORE_PASSWORD") as String
-            keyAlias = project.property("KEY_ALIAS") as String
-            keyPassword = project.property("KEY_PASSWORD") as String
+            storeFile = file(secrets["KEYSTORE_FILE"] as String)
+            storePassword = secrets["KEYSTORE_PASSWORD"] as String
+            keyAlias = secrets["KEY_ALIAS"] as String
+            keyPassword = secrets["KEY_PASSWORD"] as String
         }
     }
 
@@ -58,13 +73,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
     }
+    @Suppress("UnstableAPIUsage")
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }

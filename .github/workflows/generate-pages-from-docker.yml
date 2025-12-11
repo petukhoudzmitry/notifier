@@ -1,0 +1,112 @@
+name: Generate pages from Docker proxy and publish to GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  issues: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/sarperavci/cloudflarebypassforscraping:latest
+      PORT: 8000
+      TARGET_URL: "https://visas-it.tlscontact.com"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull Docker image
+        run: docker pull $IMAGE
+
+      - name: Ensure old container is removed and run Docker container
+        run: |
+          docker rm -f pagegen 2>/dev/null || true
+          docker run -d --name pagegen -p ${PORT}:${PORT} $IMAGE
+
+      - name: Wait for local service on localhost:${PORT} (max 90s)
+        run: |
+          set -euo pipefail
+          echo "Waiting up to 90s for http://localhost:${PORT}/ to respond..."
+          i=0
+          while [ $i -lt 90 ]; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PORT}/" || echo "000")
+            echo "  attempt $((i+1)) -> HTTP status: $status"
+            if [ "$status" != "000" ]; then
+              echo "Service responded!"
+              break
+            fi
+            i=$((i+1))
+            sleep 1
+          done
+
+          status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PORT}/" || echo "000")
+          if [ "$status" = "000" ]; then
+            echo "Container did not respond in time. Dumping container logs..."
+            docker logs --tail 200 pagegen || true
+            exit 1
+          fi
+
+      - name: Test container->internet connectivity (inside container)
+        run: |
+          echo "Testing container->internet by requesting target via proxy inside the container..."
+          docker exec pagegen curl -v --max-time 30 --get --data-urlencode "url=${TARGET_URL}" "http://127.0.0.1:${PORT}/html" || true
+          echo "Finished internal test (errors above captured but won't stop the job)."
+
+      - name: Create public folder
+        run: mkdir -p public
+
+      - name: Fetch HTML pages from container
+        run: |
+          set -euo pipefail
+          
+          URLS=(
+            "https://visas-it.tlscontact.com/en-us/country/by/vac/byMSQ2it/news"
+            "https://visas-it.tlscontact.com/ru-ru/country/by/vac/byMSQ2it/news"
+            "https://visas-it.tlscontact.com/it-it/country/by/vac/byMSQ2it/news"
+          )
+          
+          mkdir -p public
+          
+          for url in "${URLS[@]}"; do
+            lang_code=$(echo "$url" | sed -E 's|https://[^/]+/([^/]+)/.*|\1|')
+            filename="public/${lang_code}.html"
+            echo "Fetching $url -> $filename"
+          
+            ATTEMPTS=3
+            for attempt in $(seq 1 $ATTEMPTS); do
+              echo "Fetch attempt $attempt/$ATTEMPTS -> saving to $filename"
+              if curl -sS --max-time 30 --get --data-urlencode "url=$url" "http://localhost:${PORT}/html" -o "$filename"; then
+                echo "Fetched $filename successfully."
+                break
+              else
+                echo "Attempt $attempt failed for $url, retrying..."
+                sleep 2
+              fi
+              if [ $attempt -eq $ATTEMPTS ]; then
+                echo "All fetch attempts failed for $url. Dumping container logs for debugging:"
+                docker logs --tail 200 pagegen || true
+                exit 1
+              fi
+            done
+          done
+
+      - name: Stop and remove container
+        if: always()
+        run: |
+          docker stop pagegen || true
+          docker rm pagegen || true
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public

@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+secrets.properties
+.idea
+keystore.jks
