@@ -1,22 +1,5 @@
-{
-  "name": "news-extraction-api",
-  "version": "1",
-  "links": [
-    {
-      "id": "cloudflare-bypass",
-      "url": "http://cloudflare.bnhze9dzfvf5b8gs.switzerlandnorth.azurecontainer.io:8000/html"
-    },
-    {
-      "id": "news-en",
-      "url": "https://visas-it.tlscontact.com/en-us/country/by/vac/byMSQ2it/news"
-    },
-    {
-      "id": "news-ru",
-      "url": "https://visas-it.tlscontact.com/ru-ru/country/by/vac/byMSQ2it/news"
-    },
-    {
-      "id": "news-it",
-      "url": "https://visas-it.tlscontact.com/it-it/country/by/vac/byMSQ2it/news"
-    }
-  ]
-}
+[
+  "en-us.html",
+  "it-it.html",
+  "ru-ru.html"
+]
