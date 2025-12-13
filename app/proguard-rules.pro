@@ -20,11 +20,11 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keepclassmembers class com.tlscontact.models.** {
+-keepclassmembers class com.tlscontact.model.** {
    *;
 }
 
--keepnames class com.tlscontact.models.**
+-keepnames class com.tlscontact.model.**
 
 -dontwarn com.google.auto.service.AutoService
 -dontwarn javax.annotation.processing.AbstractProcessor
