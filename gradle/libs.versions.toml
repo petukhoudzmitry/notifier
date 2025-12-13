@@ -1,11 +1,12 @@
 [versions]
-agp = "8.13.1"
+agp = "8.13.2"
 hiltAndroid = "2.55"
 kotlin = "2.1.10"
 coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+kotlinxCoroutinesTest = "1.10.2"
 lifecycleRuntimeKtx = "2.9.0"
 activityCompose = "1.10.1"
 composeBom = "2025.05.01"
@@ -14,12 +15,19 @@ jsoup = "1.19.1"
 ksp = "2.1.10-1.0.31"
 coroutines = "1.10.1"
 datastore = "1.1.7"
+mockitoKotlin = "6.1.0"
+moshi = "1.15.2"
 protobuf = "4.30.0"
 protobuf-plugin = "0.9.4"
+roomRuntime = "2.8.4"
+slf4jSimple = "2.0.17"
 sonarqube = "6.2.0.5505"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "roomRuntime" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hiltAndroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -35,12 +43,16 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
+moshi = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 protobuf = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

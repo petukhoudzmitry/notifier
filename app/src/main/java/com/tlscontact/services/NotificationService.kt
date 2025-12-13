@@ -7,7 +7,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.tlscontact.repositories.ConfigurationRepository
+import com.tlscontact.repository.PageRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,9 +18,14 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class NotificationService : Service() {
-    @Inject lateinit var dataProcessingService: DataProcessingService
-    @Inject lateinit var configurationRepository: ConfigurationRepository
-    @Inject lateinit var notificationChannelService: NotificationChannelService
+    @Inject
+    lateinit var dataProcessingService: DataProcessingService
+
+    @Inject
+    lateinit var notificationChannelService: NotificationChannelService
+
+    @Inject
+    lateinit var pageRepository: PageRepository
 
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -57,14 +62,21 @@ class NotificationService : Service() {
     private fun startRequestLoop() {
         coroutineScope.launch {
             while (true) {
-                val latestNews = dataProcessingService.getLatestNews()
-                val latestSavedNews = configurationRepository.getConfiguration()
+                val latestNews = dataProcessingService.getLatestNews().sortedBy { it.name }
+                val latestSavedNews = pageRepository.getAll().sortedBy { it.name }
 
-                Log.i("FETCHED_DATA", latestNews)
+                Log.i("FETCHED_DATA", latestNews.map { it.name }.joinToString { " " })
 
                 if (latestNews != latestSavedNews) {
-                    configurationRepository.updateConfiguration(latestNews)
-                    notificationChannelService.sendNotification(latestNews)
+                    pageRepository.insertAll(latestNews)
+                    latestNews.zip(latestSavedNews).filter { (a, b) ->
+                        a != b
+                    }.forEach { (a, _) ->
+                        notificationChannelService.sendNotification(
+                            a.articles.firstOrNull()?.title ?: a.name,
+                            a.url
+                        )
+                    }
                 }
 
                 delay(60_000)

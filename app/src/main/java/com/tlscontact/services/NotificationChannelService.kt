@@ -20,10 +20,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
 
-class NotificationChannelService @Inject constructor(@ApplicationContext private val context: Context,
-                                                     private val urlService: URLService) {
+class NotificationChannelService @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val urlService: URLService
+) {
     private val channelId = "notifier_channel_id"
     private val atomicInt: AtomicInteger = AtomicInteger()
+
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelName = "Notifier Channel"
@@ -38,14 +41,20 @@ class NotificationChannelService @Inject constructor(@ApplicationContext private
         }
     }
 
-    fun sendNotification(contentText: String) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            val notificationId = atomicInt.get()
+    fun sendNotification(contentText: String, url: String = urlService.url.toString()) {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val notificationId = atomicInt.getAndIncrement()
 
-            val intent = Intent(Intent.ACTION_VIEW, urlService.url.toString().toUri())
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
 
-            val pendingIntent = PendingIntent.getActivity(context, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            val pendingIntent = PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
 
             val builder = NotificationCompat.Builder(context, channelId)
@@ -66,7 +75,6 @@ class NotificationChannelService @Inject constructor(@ApplicationContext private
     }
 
     companion object {
-
         fun requestNotificationPermission(activity: MainActivity) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val requestPermissionLauncher = activity.registerForActivityResult(
