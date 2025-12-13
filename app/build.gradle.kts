@@ -1,13 +1,13 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.nio.file.Files
-import java.nio.file.Paths
 import java.util.Properties
 
 val secrets = Properties()
-Files.newBufferedReader(Paths.get("secrets.properties")).use {
+Files.newBufferedReader(project.rootDir.resolve("secrets.properties").toPath()).use {
     secrets.load(it)
 }
+val mockitoAgent = configurations.create("mockitoAgent")
 
 plugins {
     alias(libs.plugins.ksp)
@@ -15,7 +15,6 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.protobuf)
     alias(libs.plugins.sonarqube)
 }
 
@@ -27,9 +26,10 @@ sonarqube {
     }
 }
 
+
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_1_8)
+        jvmTarget.set(JvmTarget.JVM_23)
     }
 }
 
@@ -42,9 +42,9 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "v1.0.3"
+        versionName = "v1.0.4"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "org.mockito.junit.MockitoJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -70,8 +70,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_23
+        targetCompatibility = JavaVersion.VERSION_23
     }
     buildFeatures {
         compose = true
@@ -85,6 +85,12 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/gradle/incremental.annotation.processors"
+        }
+    }
+
+    testOptions {
+        unitTests.all {
+            it.jvmArgs("-XX:+EnableDynamicAgentLoading", "-Xshare:off")
         }
     }
 }
@@ -101,7 +107,6 @@ android.applicationVariants.configureEach {
 }
 
 dependencies {
-
     implementation(libs.hilt.android)
     implementation(libs.hilt.android.compiler)
     ksp(libs.hilt.android.compiler)
@@ -113,7 +118,6 @@ dependencies {
     implementation(libs.coroutines)
 
     implementation(libs.datastore)
-    implementation(libs.protobuf)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -123,27 +127,26 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.slf4j.simple)
+
+    testImplementation(libs.mockito.kotlin)
+    mockitoAgent(libs.mockito.kotlin) {
+        isTransitive = false
+    }
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-}
 
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:3.8.0"
-    }
+    implementation(libs.moshi)
 
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                create("java") {
-                    option("lite")
-                }
-            }
-        }
-    }
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
 }
