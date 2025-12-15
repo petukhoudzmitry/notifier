@@ -63,7 +63,7 @@ jobs:
       - name: Create public folder
         run: mkdir -p public
 
-      - name: Fetch HTML pages from container
+      - name: Fetch HTML pages from container (Cloudflare-safe)
         run: |
           set -euo pipefail
           
@@ -78,24 +78,77 @@ jobs:
           for url in "${URLS[@]}"; do
             lang_code=$(echo "$url" | sed -E 's|https://[^/]+/([^/]+)/.*|\1|')
             filename="public/${lang_code}.html"
+            tmpfile="$(mktemp)"
+          
             echo "Fetching $url -> $filename"
           
             ATTEMPTS=3
+            success=false
+          
             for attempt in $(seq 1 $ATTEMPTS); do
-              echo "Fetch attempt $attempt/$ATTEMPTS -> saving to $filename"
-              if curl -sS --max-time 30 --get --data-urlencode "url=$url" "http://localhost:${PORT}/html" -o "$filename"; then
-                echo "Fetched $filename successfully."
-                break
-              else
-                echo "Attempt $attempt failed for $url, retrying..."
+              echo "Attempt $attempt/$ATTEMPTS"
+          
+              http_code=$(curl -sS \
+                --max-time 30 \
+                --get \
+                --data-urlencode "url=$url" \
+                -w "%{http_code}" \
+                -o "$tmpfile" \
+                "http://localhost:${PORT}/html" || echo "000")
+          
+              echo "HTTP status: $http_code"
+          
+              # 1. Must be HTTP 200
+              if [ "$http_code" -ne 200 ]; then
+                echo "Non-200 response"
                 sleep 2
+                continue
               fi
-              if [ $attempt -eq $ATTEMPTS ]; then
-                echo "All fetch attempts failed for $url. Dumping container logs for debugging:"
-                docker logs --tail 200 pagegen || true
-                exit 1
+          
+              # 2. Must not be empty
+              if [ ! -s "$tmpfile" ]; then
+                echo "Empty response body"
+                sleep 2
+                continue
               fi
+          
+              # 3. Reject JSON Cloudflare-bypass errors
+              if grep -qiE '"detail"\s*:\s*"Failed to bypass Cloudflare protection"' "$tmpfile"; then
+                echo "Proxy reported Cloudflare bypass failure (JSON error)"
+                sleep 2
+                continue
+              fi
+          
+              # 4. Reject Cloudflare challenge HTML
+              if grep -qiE \
+                'cloudflare|cf-browser-verification|challenge-platform|Just a moment|Attention Required' \
+                "$tmpfile"; then
+                echo "Cloudflare challenge page detected"
+                sleep 2
+                continue
+              fi
+          
+              # 5. Require actual HTML
+              if ! grep -qi "<html" "$tmpfile"; then
+                echo "Response is not HTML"
+                sleep 2
+                continue
+              fi
+          
+              # SUCCESS
+              mv "$tmpfile" "$filename"
+              echo "Fetched $filename successfully."
+              success=true
+              break
             done
+          
+            rm -f "$tmpfile"
+          
+            if [ "$success" != true ]; then
+              echo "FAILED to fetch valid content for $url"
+              docker logs --tail 200 pagegen || true
+              exit 1
+            fi
           done
 
       - name: Stop and remove container
