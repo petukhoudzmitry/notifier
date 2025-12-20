@@ -35,19 +35,26 @@ jobs:
         run: |
           set -euo pipefail
           echo "Waiting up to 90s for http://localhost:${PORT}/ to respond..."
+          
           i=0
           while [ $i -lt 90 ]; do
-            status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PORT}/")
+            status=$(curl -s -o /dev/null -w "%{http_code}" \
+              "http://localhost:${PORT}/" || true)
+          
             echo "  attempt $((i+1)) -> HTTP status: $status"
+          
             if [ "$status" != "000" ]; then
               echo "Service responded!"
               break
             fi
+          
             i=$((i+1))
             sleep 1
           done
-
-          status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PORT}/")
+          
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "http://localhost:${PORT}/" || true)
+          
           if [ "$status" = "000" ]; then
             echo "Container did not respond in time. Dumping container logs..."
             docker logs --tail 200 pagegen || true
