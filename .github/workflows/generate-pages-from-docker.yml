@@ -57,7 +57,7 @@ jobs:
       - name: Test container->internet connectivity (inside container)
         run: |
           echo "Testing container->internet by requesting target via proxy inside the container..."
-          docker exec pagegen curl -v --max-time 60 -get "http://127.0.0.1:${PORT}" -H "x-hostname: $TARGET_URL" || true
+          docker exec pagegen curl -v --max-time 60 --get "http://127.0.0.1:${PORT}" -H "x-hostname: $TARGET_URL" || true
           echo "Finished internal test (errors above captured but won't stop the job)."
 
       - name: Create public folder
@@ -89,7 +89,7 @@ jobs:
               http_code=$(curl -sS \
                 --max-time 60 \
                 --data-urlencode "url=$url" \
-                -get \
+                --get \
                 -w "%{http_code}" \
                 -o "$tmpfile" \
                 -H "x-bypass-cache: false" \
