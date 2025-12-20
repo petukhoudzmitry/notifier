@@ -16,22 +16,40 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE: ghcr.io/sarperavci/cloudflarebypassforscraping:latest
+      IMAGE_NAME: cloudflarebypass
       PORT: 8000
       TARGET_URL: "visas-it.tlscontact.com"
 
     steps:
+      - name: Cache Docker image
+        uses: actions/cache@v5.0.1
+        with:
+          path: /tmp/docker-images
+          key: docker-image-$IMAGE_NAME
+
+      - name: Load image if cached
+        run: |
+          mkdir -p /tmp/docker-images
+          if [ -f /tmp/docker-images/$IMAGE_NAME.tar ]; then
+            docker load < /tmp/docker-images/$IMAGE_NAME.tar
+          fi
+
+      - name: Pull image if not cached
+        run: |
+          if ! docker image inspect $IMAGE > /dev/null 2>&1; then
+            docker pull $IMAGE
+            docker save $IMAGE > /tmp/docker-images/$IMAGE_NAME.tar
+          fi
+    
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Pull Docker image
-        run: docker pull $IMAGE
 
       - name: Ensure old container is removed and run Docker container
         run: |
           docker rm -f pagegen 2>/dev/null || true
           docker run -d --name pagegen -p ${PORT}:${PORT} $IMAGE
 
-      - name: Wait for local service on localhost:${PORT} (max 90s)
+      - name: Wait for local service on localhost:"${PORT}" (max 90s)
         run: |
           set -euo pipefail
           echo "Waiting up to 90s for http://localhost:${PORT}/ to respond..."
