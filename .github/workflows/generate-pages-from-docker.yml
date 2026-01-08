@@ -75,9 +75,9 @@ jobs:
           set -euo pipefail
     
           URLS=(
-            "https://visas-it.tlscontact. com/en-us/country/by/vac/byMSQ2it/news"
+            "https://visas-it.tlscontact.com/en-us/country/by/vac/byMSQ2it/news"
             "https://visas-it.tlscontact.com/ru-ru/country/by/vac/byMSQ2it/news"
-            "https://visas-it.tlscontact. com/it-it/country/by/vac/byMSQ2it/news"
+            "https://visas-it.tlscontact.com/it-it/country/by/vac/byMSQ2it/news"
           )
       
           for url in "${URLS[@]}"; do
