@@ -5,6 +5,10 @@ on:
   repository_dispatch:
     types: [ external_trigger ]
 
+concurrency:
+  group: pagegen
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pages: write
