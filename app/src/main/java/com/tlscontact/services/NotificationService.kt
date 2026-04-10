@@ -79,7 +79,7 @@ class NotificationService : Service() {
                     }
                 }
 
-                delay(60_000)
+                delay(180_000)
             }
         }
     }
