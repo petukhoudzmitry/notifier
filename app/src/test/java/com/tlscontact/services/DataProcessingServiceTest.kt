@@ -33,14 +33,14 @@ class DataProcessingServiceTest {
 
     @Test
     fun `fetch news list from github is correct`() = runTest {
-        val result = dataProcessingService.fetchNewsListFromGitHub()
+        val result = dataProcessingService.fetchURLList()
 
         assert(result.isNotEmpty())
     }
 
     @Test
     fun `data fetch is correct`() = runTest {
-        val newsListToFetch = dataProcessingService.fetchNewsListFromGitHub()
+        val newsListToFetch = dataProcessingService.fetchURLList()
         val result = dataProcessingService.fetchData()
 
         assert(newsListToFetch.isNotEmpty())

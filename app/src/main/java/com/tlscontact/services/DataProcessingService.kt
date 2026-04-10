@@ -24,16 +24,17 @@ class DataProcessingService @Inject constructor(
     private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     private val jsonAdapter = moshi.adapter(Array<NewsItem>::class.java)
 
-    suspend fun fetchNewsListFromGitHub(): List<NewsItem> {
-        val result =
-            try {
-                val response = httpClientService.httpClient.get(urlService.url).bodyAsText()
+    suspend fun fetchURLList(): List<NewsItem> {
+        val result = try {
+            val response = httpClientService.httpClient.get(urlService.baseURL)
 
-                jsonAdapter.fromJson(response)?.toList() ?: emptyList()
-            } catch (e: Exception) {
-                Log.e("FETCH_SITES_EXCEPTION", e.message.toString())
-                emptyList()
-            }
+            if (response.status.value != 200) throw Exception("Invalid response")
+
+            jsonAdapter.fromJson(response.bodyAsText())?.toList() ?: emptyList()
+        } catch (e: Exception) {
+            Log.e("FETCH_SITES_EXCEPTION", e.message.toString())
+            emptyList()
+        }
 
         return result
     }
@@ -41,10 +42,14 @@ class DataProcessingService @Inject constructor(
     suspend fun fetchData(): List<Page> {
         val pages = mutableListOf<Page>()
         try {
-            val newsListToFetch = fetchNewsListFromGitHub()
-            newsListToFetch.forEachIndexed { index, it ->
-                val html = httpClientService.httpClient.get("${urlService.baseURL}/${it.name}")
-                    .bodyAsText()
+            val targetUrls = fetchURLList()
+            targetUrls.forEachIndexed { index, it ->
+                val response = httpClientService.httpClient.get("${urlService.baseURL}?url=${it.url}")
+
+                if (response.status.value != 200) throw Exception("Invalid response")
+
+                val html = response.bodyAsText()
+
                 val articles = extractArticlesFromHTML(html)
 
                 pages += Page(index, it.name, it.url, articles)

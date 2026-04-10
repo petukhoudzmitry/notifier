@@ -41,7 +41,7 @@ class NotificationChannelService @Inject constructor(
         }
     }
 
-    fun sendNotification(contentText: String, url: String = urlService.url.toString()) {
+    fun sendNotification(contentText: String, url: String = urlService.url) {
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
