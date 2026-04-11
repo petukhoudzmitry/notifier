@@ -11,8 +11,10 @@ import com.tlscontact.repository.PageRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -59,24 +61,34 @@ class NotificationService : Service() {
         }
     }
 
+    private var loopJob: Job? = null
+
     private fun startRequestLoop() {
-        coroutineScope.launch {
-            while (true) {
-                val latestNews = dataProcessingService.getLatestNews().sortedBy { it.name }
-                val latestSavedNews = pageRepository.getAll().sortedBy { it.name }
+        if (loopJob?.isActive == true) return
 
-                Log.i("FETCHED_DATA", latestNews.map { it.name }.joinToString { " " })
+        loopJob = coroutineScope.launch {
+            while (isActive) {
+                try {
+                    Log.i("FETCH_LOOP", "tick ${System.currentTimeMillis()}")
 
-                if (latestNews != latestSavedNews) {
-                    pageRepository.insertAll(latestNews)
-                    latestNews.zip(latestSavedNews).filter { (a, b) ->
-                        a != b
-                    }.forEach { (a, _) ->
-                        notificationChannelService.sendNotification(
-                            a.articles.firstOrNull()?.title ?: a.name,
-                            a.url
-                        )
+                    val latestNews = dataProcessingService.getLatestNews().sortedBy { it.name }
+                    val latestSavedNews = pageRepository.getAll().sortedBy { it.name }
+
+                    Log.i("FETCHED_DATA", latestNews.joinToString(" ") { it.name })
+
+                    if (latestNews != latestSavedNews) {
+                        pageRepository.insertAll(latestNews)
+
+                        latestNews.zip(latestSavedNews).filter { (a, b) -> a != b }
+                            .forEach { (a, _) ->
+                                notificationChannelService.sendNotification(
+                                    a.articles.firstOrNull()?.title ?: a.name,
+                                    a.url
+                                )
+                            }
                     }
+                } catch (t: Throwable) {
+                    Log.e("FETCH_LOOP", "loop failed", t)
                 }
 
                 delay(180_000)
